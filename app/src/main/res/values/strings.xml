@@ -1,0 +1,8 @@
+<resources>
+    <string name="application.name">Revise the Vocabulary</string>
+    <string name="translation.text.placeholder">Show translation</string>
+    <string name="action.add.file.caption">Add .docx file</string>
+    <string name="action.add.single.caption">Add single phrase</string>
+    <string name="phrase.text.not_found">No phrases found!</string>
+    <string name="action.remove.single.caption">Remove phrase</string>
+</resources>
