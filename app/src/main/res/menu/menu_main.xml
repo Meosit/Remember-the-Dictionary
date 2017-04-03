@@ -5,16 +5,16 @@
     <item
         android:id="@+id/action_add_file"
         android:orderInCategory="100"
-        android:title="@string/action.add.file.caption"
+        android:title="@string/menu.add.file.caption"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_add_single"
         android:orderInCategory="100"
-        android:title="@string/action.add.single.caption"
+        android:title="@string/menu.add.single.caption"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_remove_single"
         android:orderInCategory="100"
-        android:title="@string/action.remove.single.caption"
+        android:title="@string/menu.remove.single.caption"
         app:showAsAction="never" />
 </menu>

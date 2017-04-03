@@ -1,39 +1,32 @@
 package by.mksn.rememberthedictionary;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Xml;
-import android.view.LayoutInflater;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import by.mksn.rememberthedictionary.model.Phrase;
 import by.mksn.rememberthedictionary.model.PhraseStore;
 import by.mksn.rememberthedictionary.model.PhraseStoreFactory;
+
+import static by.mksn.rememberthedictionary.ActivityUtil.showAddSingleDialog;
+import static by.mksn.rememberthedictionary.ActivityUtil.showRemoveSingleDialog;
+import static by.mksn.rememberthedictionary.ActivityUtil.verifyStoragePermissions;
+import static by.mksn.rememberthedictionary.FileParserUtil.readDOCX;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -45,72 +38,6 @@ public class MainActivity extends AppCompatActivity {
     private TextView translationView;
     private Phrase currentPhrase;
 
-    public static List<Phrase> readDOCX(File file) throws IOException, XmlPullParserException {
-        ZipFile docxFile = new ZipFile(file);
-        ZipEntry sharedStringXML = docxFile.getEntry("word/document.xml");
-        InputStream inputStream = docxFile.getInputStream(sharedStringXML);
-        XmlPullParser xmlParser = Xml.newPullParser();
-        xmlParser.setInput(inputStream, "utf-8");
-        int evtType = xmlParser.getEventType();
-        boolean isReadEnd = false;
-        boolean isInTable = false;
-        boolean isInTableRow = false;
-        boolean isFirstTableRowCell = false;
-        boolean isInTableRowCell = false;
-        String readString = "";
-        Phrase phrase = null;
-        List<Phrase> phrases = new ArrayList<>();
-        while (evtType != XmlPullParser.END_DOCUMENT && !isReadEnd) {
-            String tag = xmlParser.getName().toLowerCase();
-            switch (evtType) {
-                case XmlPullParser.START_TAG:
-                    switch (tag) {
-                        case "tbl":
-                            isInTable = true;
-                            break;
-                        case "tr":
-                            isInTableRow = true;
-                            isFirstTableRowCell = true;
-                            phrase = new Phrase();
-                            break;
-                        case "tc":
-                            isInTableRowCell = true;
-                            readString = "";
-                            break;
-                        case "t":
-                            if (isInTable && isInTableRow && isInTableRowCell) {
-                                readString += xmlParser.nextText();
-                            }
-                            break;
-                    }
-                    break;
-                case XmlPullParser.END_TAG:
-                    switch (tag) {
-                        case "tbl":
-                            isReadEnd = true;
-                            break;
-                        case "tr":
-                            phrases.add(phrase);
-                            break;
-                        case "tc":
-                            if (isFirstTableRowCell) {
-                                phrase.setPhrase(readString);
-                            } else {
-                                phrase.setTranslation(readString);
-                            }
-                            isFirstTableRowCell = false;
-                            break;
-                        case "t":
-                            break;
-                    }
-                    break;
-                default:
-                    break;
-            }
-            evtType = xmlParser.next();
-        }
-        return phrases;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,13 +75,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Fires an intent to spin up the "file chooser" UI and select an image.
-     */
-    public void performFileSearch() {
-
-        // ACTION_OPEN_DOCUMENT is the intent to choose a file via the system's file
-        // browser.
+    public void performDocxFileSearch() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
 
         // Filter to only show results that can be "opened", such as a
@@ -165,7 +86,6 @@ public class MainActivity extends AppCompatActivity {
         // To search for all documents available via installed storage providers,
         // it would be "*/*".
         intent.setType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-
         startActivityForResult(intent, READ_REQUEST_CODE);
     }
 
@@ -176,9 +96,12 @@ public class MainActivity extends AppCompatActivity {
             if (data != null) {
                 uri = data.getData();
                 try {
-                    String path = uri.getPath();
-                    readExternalDocument(new File("/storage/emulated/0/Download/Vocabulary list 7.docx"));
+                    String relativePath = uri.getLastPathSegment().replace("primary:", "");
+                    String absolutePath = Environment.getExternalStoragePublicDirectory("") + "/" + relativePath;
+                    List<Phrase> phrases = readExternalDocument(new File(absolutePath));
+                    phraseStore.insertAll(phrases);
                 } catch (CannotReadFileException e) {
+                    Log.e("Cannot read file ", "", e);
                     Toast.makeText(this, "Cannot read this file", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -199,13 +122,14 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         switch (item.getItemId()) {
             case R.id.action_add_single:
-                showAddSingleDialog();
+                showAddSingleDialog(this, phraseStore);
                 return true;
             case R.id.action_add_file:
-                performFileSearch();
+                verifyStoragePermissions(this);
+                performDocxFileSearch();
                 return true;
             case R.id.action_remove_single:
-                showRemoveSingleDialog();
+                showRemoveSingleDialog(this, phraseStore);
                 return true;
         }
 
@@ -227,91 +151,6 @@ public class MainActivity extends AppCompatActivity {
             phraseView.setText(R.string.phrase_text_not_found);
         }
 
-    }
-
-    private void showRemoveSingleDialog() {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
-        final View dialogView = inflater.inflate(R.layout.remove_single_dialog, null);
-        dialogBuilder.setView(dialogView);
-
-        final EditText phrase = (EditText) dialogView.findViewById(R.id.removeEdit);
-
-        dialogBuilder.setTitle("Remove phrase");
-        dialogBuilder.setMessage("Type phrase to remove");
-        dialogBuilder.setPositiveButton("Add", null);
-        dialogBuilder.setNegativeButton("Cancel", null);
-        final AlertDialog dialog = dialogBuilder.create();
-        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface dialogInterface) {
-                Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-                button.setOnClickListener(new View.OnClickListener() {
-
-                    @Override
-                    public void onClick(View view) {
-                        if (!phrase.getText().toString().isEmpty()) {
-                            phraseStore.delete(phrase.getText().toString());
-                            dialog.dismiss();
-                        } else {
-                            Toast.makeText(
-                                    MainActivity.this,
-                                    "Phrase field must be not empty!",
-                                    Toast.LENGTH_LONG
-                            ).show();
-                        }
-
-                    }
-                });
-
-            }
-        });
-        dialog.show();
-    }
-
-    private void showAddSingleDialog() {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
-        final View dialogView = inflater.inflate(R.layout.add_single_dialog, null);
-        dialogBuilder.setView(dialogView);
-
-        final EditText phrase = (EditText) dialogView.findViewById(R.id.phraseEdit);
-        final EditText translation = (EditText) dialogView.findViewById(R.id.translationEdit);
-
-        dialogBuilder.setTitle("Add new phrase");
-        dialogBuilder.setMessage("It will be replaced if it already exists");
-        dialogBuilder.setPositiveButton("Add", null);
-        dialogBuilder.setNegativeButton("Cancel", null);
-        final AlertDialog dialog = dialogBuilder.create();
-        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface dialogInterface) {
-                Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-                button.setOnClickListener(new View.OnClickListener() {
-
-                    @Override
-                    public void onClick(View view) {
-                        if (!phrase.getText().toString().isEmpty()) {
-                            Phrase newPhrase = new Phrase(
-                                    phrase.getText().toString(),
-                                    translation.getText().toString()
-                            );
-                            phraseStore.insert(newPhrase);
-                            dialog.dismiss();
-                        } else {
-                            Toast.makeText(
-                                    MainActivity.this,
-                                    "Phrase field must be not empty!",
-                                    Toast.LENGTH_LONG
-                            ).show();
-                        }
-
-                    }
-                });
-
-            }
-        });
-        dialog.show();
     }
 
     private List<Phrase> readExternalDocument(File file) throws CannotReadFileException {

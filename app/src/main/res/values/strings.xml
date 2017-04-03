@@ -1,8 +1,18 @@
 <resources>
     <string name="application.name">Revise the Vocabulary</string>
-    <string name="translation.text.placeholder">Show translation</string>
-    <string name="action.add.file.caption">Add .docx file</string>
-    <string name="action.add.single.caption">Add single phrase</string>
     <string name="phrase.text.not_found">No phrases found!</string>
-    <string name="action.remove.single.caption">Remove phrase</string>
+    <string name="translation.text.placeholder">Show translation</string>
+    <string name="menu.add.file.caption">Add .docx file</string>
+    <string name="menu.add.single.caption">Add single phrase</string>
+    <string name="menu.remove.single.caption">Remove phrase</string>
+    <string name="dialog.remove.single.title">Remove phrase</string>
+    <string name="dialog.remove.single.message">Type phrase to remove</string>
+    <string name="dialog.remove.single.positive">Delete</string>
+    <string name="dialog.remove.single.negative">Cancel</string>
+    <string name="dialog.remove.single.constraint.phrase.message">Phrase field must be not empty!</string>
+    <string name="dialog.add.single.title">Add new phrase</string>
+    <string name="dialog.add.single.message">It will be replaced if it already exists</string>
+    <string name="dialog.add.single.positive">Add</string>
+    <string name="dialog.add.single.negative">Cancel</string>
+    <string name="dialog.add.single.constraint.phrase.message">Phrase field must be not empty!</string>
 </resources>
