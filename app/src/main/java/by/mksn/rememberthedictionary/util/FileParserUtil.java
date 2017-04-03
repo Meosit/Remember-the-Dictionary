@@ -1,4 +1,4 @@
-package by.mksn.rememberthedictionary;
+package by.mksn.rememberthedictionary.util;
 
 import android.util.Xml;
 

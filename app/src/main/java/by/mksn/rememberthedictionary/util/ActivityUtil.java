@@ -1,10 +1,12 @@
-package by.mksn.rememberthedictionary;
+package by.mksn.rememberthedictionary.util;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
@@ -13,6 +15,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.util.concurrent.Callable;
+
+import by.mksn.rememberthedictionary.R;
 import by.mksn.rememberthedictionary.model.Phrase;
 import by.mksn.rememberthedictionary.model.PhraseStore;
 
@@ -39,7 +44,11 @@ public final class ActivityUtil {
         }
     }
 
-    public static void showAddSingleDialog(final Activity activity, final PhraseStore phraseStore) {
+    public static void showAddSingleDialog(final Activity activity,
+                                           final FloatingActionButton fab,
+                                           final PhraseStore phraseStore,
+                                           final Phrase phraseToUpdate,
+                                           final Callable<Void> notifyCallback) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(activity);
         LayoutInflater inflater = activity.getLayoutInflater();
         @SuppressLint("InflateParams")
@@ -49,10 +58,24 @@ public final class ActivityUtil {
         final EditText phrase = (EditText) dialogView.findViewById(R.id.phraseEdit);
         final EditText translation = (EditText) dialogView.findViewById(R.id.translationEdit);
 
-        dialogBuilder.setTitle(R.string.menu_add_single_dialog_title);
-        dialogBuilder.setMessage(R.string.menu_add_single_dialog_message);
-        dialogBuilder.setPositiveButton(R.string.menu_add_single_dialog_positive, null);
-        dialogBuilder.setNegativeButton(R.string.menu_add_single_dialog_negative, null);
+        if (phraseToUpdate != null) {
+            phrase.setEnabled(false);
+            phrase.setText(phraseToUpdate.getPhrase());
+            translation.setText(phraseToUpdate.getTranslation());
+            translation.requestFocus();
+            dialogBuilder.setTitle(R.string.menu_update_single_dialog_title);
+            dialogBuilder.setMessage(R.string.menu_update_single_dialog_message);
+            dialogBuilder.setPositiveButton(R.string.menu_update_single_dialog_positive, null);
+            dialogBuilder.setNegativeButton(R.string.menu_update_single_dialog_negative, null);
+        } else {
+            phrase.requestFocus();
+            dialogBuilder.setTitle(R.string.menu_add_single_dialog_title);
+            dialogBuilder.setMessage(R.string.menu_add_single_dialog_message);
+            dialogBuilder.setPositiveButton(R.string.menu_add_single_dialog_positive, null);
+            dialogBuilder.setNegativeButton(R.string.menu_add_single_dialog_negative, null);
+        }
+
+
         final AlertDialog dialog = dialogBuilder.create();
         dialog.setOnShowListener(new DialogInterface.OnShowListener() {
             @Override
@@ -68,7 +91,16 @@ public final class ActivityUtil {
                                     translation.getText().toString()
                             );
                             phraseStore.insert(newPhrase);
+                            if (notifyCallback != null) {
+                                try {
+                                    notifyCallback.call();
+                                } catch (Exception ignored) {
+                                }
+                            }
                             dialog.dismiss();
+                            if (fab != null) {
+                                Snackbar.make(fab, R.string.menu_add_single_success_message, Snackbar.LENGTH_SHORT).show();
+                            }
                         } else {
                             Toast.makeText(
                                     activity,
@@ -85,7 +117,10 @@ public final class ActivityUtil {
         dialog.show();
     }
 
-    public static void showRemoveSingleDialog(final Activity activity, final PhraseStore phraseStore) {
+    public static void showRemoveSingleDialog(final Activity activity,
+                                              final FloatingActionButton fab,
+                                              final PhraseStore phraseStore,
+                                              final Callable<Void> notifyCallback) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(activity);
         LayoutInflater inflater = activity.getLayoutInflater();
         @SuppressLint("InflateParams")
@@ -109,7 +144,12 @@ public final class ActivityUtil {
                     public void onClick(View view) {
                         if (!phrase.getText().toString().isEmpty()) {
                             phraseStore.delete(phrase.getText().toString());
+                            try {
+                                notifyCallback.call();
+                            } catch (Exception ignored) {
+                            }
                             dialog.dismiss();
+                            Snackbar.make(fab, R.string.menu_remove_single_success_message, Snackbar.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(
                                     activity,

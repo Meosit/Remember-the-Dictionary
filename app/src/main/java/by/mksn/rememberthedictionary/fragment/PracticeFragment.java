@@ -21,9 +21,6 @@ public class PracticeFragment extends Fragment {
     private Phrase currentPhrase;
     private Animation blinkAnimation;
 
-    public PracticeFragment() {
-    }
-
     public static PracticeFragment newInstance(PhraseStore phraseStore) {
         PracticeFragment fragment = new PracticeFragment();
         fragment.phraseStore = phraseStore;
@@ -67,6 +64,7 @@ public class PracticeFragment extends Fragment {
                 translationView.setVisibility(View.INVISIBLE);
             } else {
                 translationView.setVisibility(View.VISIBLE);
+                translationView.startAnimation(blinkAnimation);
                 translationView.setText(getString(R.string.translation_text_placeholder));
             }
             phraseView.setText(currentPhrase.getPhrase());

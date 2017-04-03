@@ -1,4 +1,4 @@
-package by.mksn.rememberthedictionary;
+package by.mksn.rememberthedictionary.util;
 
 public class CannotReadFileException extends Exception {
 

@@ -10,6 +10,10 @@
     <string name="menu.add.single.dialog.positive">Add</string>
     <string name="menu.add.single.dialog.negative">Cancel</string>
     <string name="menu.add.single.dialog.constraint.phrase.message">Phrase field must be not empty!</string>
+    <string name="menu.update.single.dialog.message">Type new translation to for this phrase</string>
+    <string name="menu.update.single.dialog.title">Update phrase</string>
+    <string name="menu.update.single.dialog.positive">Update</string>
+    <string name="menu.update.single.dialog.negative">Cancel</string>
     <string name="menu.remove.single.caption">Remove phrase</string>
     <string name="menu.remove.single.dialog.title">Remove phrase</string>
     <string name="menu.remove.single.dialog.message">Type phrase to remove</string>
@@ -19,4 +23,9 @@
     <string name="title_activity_main2">Main2Activity</string>
     <string name="action_settings">Settings</string>
     <string name="section_format">Hello World from section: %1$d</string>
+    <string name="menu.remove.single.success.message">Phrase has been removed.</string>
+    <string name="menu.add.single.success.message">Phrase has been added!</string>
+    <string name="menu.add.file.success.message">Phrases from file has been added!</string>
+    <string name="menu.popup.update">Update</string>
+    <string name="menu.popup.remove">Remove</string>
 </resources>
