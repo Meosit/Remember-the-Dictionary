@@ -6,6 +6,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class DatabaseHelper extends SQLiteOpenHelper implements PhraseStore {
 
@@ -73,6 +76,27 @@ public class DatabaseHelper extends SQLiteOpenHelper implements PhraseStore {
             }
         }
         return null;
+    }
+
+    @Override
+    public List<Phrase> selectAll() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String selectRandomQuery = "SELECT " +
+                KEY_PHRASE + ", " + KEY_TRANSLATION +
+                " FROM " + TABLE_DICTIONARY +
+                " ORDER BY " + KEY_PHRASE;
+        List<Phrase> phrases = new ArrayList<>();
+        try (Cursor cursor = db.rawQuery(selectRandomQuery, null)) {
+            if (cursor.moveToFirst()) {
+                do {
+                    Phrase phrase = new Phrase();
+                    phrase.setPhrase(cursor.getString(0));
+                    phrase.setTranslation(cursor.getString(1));
+                    phrases.add(phrase);
+                } while (cursor.moveToNext());
+            }
+        }
+        return phrases;
     }
 
     @Override

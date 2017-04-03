@@ -49,10 +49,10 @@ public final class ActivityUtil {
         final EditText phrase = (EditText) dialogView.findViewById(R.id.phraseEdit);
         final EditText translation = (EditText) dialogView.findViewById(R.id.translationEdit);
 
-        dialogBuilder.setTitle(R.string.dialog_add_single_title);
-        dialogBuilder.setMessage(R.string.dialog_add_single_message);
-        dialogBuilder.setPositiveButton(R.string.dialog_add_single_positive, null);
-        dialogBuilder.setNegativeButton(R.string.dialog_add_single_negative, null);
+        dialogBuilder.setTitle(R.string.menu_add_single_dialog_title);
+        dialogBuilder.setMessage(R.string.menu_add_single_dialog_message);
+        dialogBuilder.setPositiveButton(R.string.menu_add_single_dialog_positive, null);
+        dialogBuilder.setNegativeButton(R.string.menu_add_single_dialog_negative, null);
         final AlertDialog dialog = dialogBuilder.create();
         dialog.setOnShowListener(new DialogInterface.OnShowListener() {
             @Override
@@ -72,7 +72,7 @@ public final class ActivityUtil {
                         } else {
                             Toast.makeText(
                                     activity,
-                                    R.string.dialog_add_single_constraint_phrase_message,
+                                    R.string.menu_add_single_dialog_constraint_phrase_message,
                                     Toast.LENGTH_LONG
                             ).show();
                         }
@@ -94,10 +94,10 @@ public final class ActivityUtil {
 
         final EditText phrase = (EditText) dialogView.findViewById(R.id.removeEdit);
 
-        dialogBuilder.setTitle(R.string.dialog_remove_single_title);
-        dialogBuilder.setMessage(R.string.dialog_remove_single_message);
-        dialogBuilder.setPositiveButton(R.string.dialog_remove_single_positive, null);
-        dialogBuilder.setNegativeButton(R.string.dialog_remove_single_negative, null);
+        dialogBuilder.setTitle(R.string.menu_remove_single_dialog_title);
+        dialogBuilder.setMessage(R.string.menu_remove_single_dialog_message);
+        dialogBuilder.setPositiveButton(R.string.menu_remove_single_dialog_positive, null);
+        dialogBuilder.setNegativeButton(R.string.menu_remove_single_dialog_negative, null);
         final AlertDialog dialog = dialogBuilder.create();
         dialog.setOnShowListener(new DialogInterface.OnShowListener() {
             @Override
@@ -113,7 +113,7 @@ public final class ActivityUtil {
                         } else {
                             Toast.makeText(
                                     activity,
-                                    R.string.dialog_remove_single_constraint_phrase_message,
+                                    R.string.menu_remove_single_dialog_constraint_phrase_message,
                                     Toast.LENGTH_LONG
                             ).show();
                         }
