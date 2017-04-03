@@ -4,12 +4,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
+import android.util.Xml;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,9 +20,16 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import by.mksn.rememberthedictionary.model.Phrase;
 import by.mksn.rememberthedictionary.model.PhraseStore;
@@ -31,12 +37,80 @@ import by.mksn.rememberthedictionary.model.PhraseStoreFactory;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int READ_REQUEST_CODE = 42;
     private Animation rotateAnimation;
     private Animation blinkAnimation;
     private PhraseStore phraseStore;
     private TextView phraseView;
     private TextView translationView;
     private Phrase currentPhrase;
+
+    public static List<Phrase> readDOCX(File file) throws IOException, XmlPullParserException {
+        ZipFile docxFile = new ZipFile(file);
+        ZipEntry sharedStringXML = docxFile.getEntry("word/document.xml");
+        InputStream inputStream = docxFile.getInputStream(sharedStringXML);
+        XmlPullParser xmlParser = Xml.newPullParser();
+        xmlParser.setInput(inputStream, "utf-8");
+        int evtType = xmlParser.getEventType();
+        boolean isReadEnd = false;
+        boolean isInTable = false;
+        boolean isInTableRow = false;
+        boolean isFirstTableRowCell = false;
+        boolean isInTableRowCell = false;
+        String readString = "";
+        Phrase phrase = null;
+        List<Phrase> phrases = new ArrayList<>();
+        while (evtType != XmlPullParser.END_DOCUMENT && !isReadEnd) {
+            String tag = xmlParser.getName().toLowerCase();
+            switch (evtType) {
+                case XmlPullParser.START_TAG:
+                    switch (tag) {
+                        case "tbl":
+                            isInTable = true;
+                            break;
+                        case "tr":
+                            isInTableRow = true;
+                            isFirstTableRowCell = true;
+                            phrase = new Phrase();
+                            break;
+                        case "tc":
+                            isInTableRowCell = true;
+                            readString = "";
+                            break;
+                        case "t":
+                            if (isInTable && isInTableRow && isInTableRowCell) {
+                                readString += xmlParser.nextText();
+                            }
+                            break;
+                    }
+                    break;
+                case XmlPullParser.END_TAG:
+                    switch (tag) {
+                        case "tbl":
+                            isReadEnd = true;
+                            break;
+                        case "tr":
+                            phrases.add(phrase);
+                            break;
+                        case "tc":
+                            if (isFirstTableRowCell) {
+                                phrase.setPhrase(readString);
+                            } else {
+                                phrase.setTranslation(readString);
+                            }
+                            isFirstTableRowCell = false;
+                            break;
+                        case "t":
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            evtType = xmlParser.next();
+        }
+        return phrases;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private static final int READ_REQUEST_CODE = 42;
     /**
      * Fires an intent to spin up the "file chooser" UI and select an image.
      */
@@ -87,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
         // Filter to only show results that can be "opened", such as a
         // file (as opposed to a list of contacts or timezones)
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-
         // Filter to show only images, using the image MIME data type.
         // If one wanted to search for ogg vorbis files, the type would be "audio/ogg".
         // To search for all documents available via installed storage providers,
@@ -103,9 +175,9 @@ public class MainActivity extends AppCompatActivity {
             Uri uri;
             if (data != null) {
                 uri = data.getData();
-                Log.i("Uri: ", uri.toString());
                 try {
-                    readExternalDocument(new File(uri.getPath()));
+                    String path = uri.getPath();
+                    readExternalDocument(new File("/storage/emulated/0/Download/Vocabulary list 7.docx"));
                 } catch (CannotReadFileException e) {
                     Toast.makeText(this, "Cannot read this file", Toast.LENGTH_SHORT).show();
                 }
@@ -139,7 +211,6 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
-
 
     private void loadPhrase() {
         currentPhrase = phraseStore.selectRandom();
@@ -246,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Phrase> readExternalDocument(File file) throws CannotReadFileException {
         List<Phrase> phrases;
         try {
-            phrases = new ArrayList<>();
+            phrases = readDOCX(file);
         } catch (Exception e) {
             throw new CannotReadFileException(e);
         }
